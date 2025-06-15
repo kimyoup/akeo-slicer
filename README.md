@@ -45,7 +45,7 @@
 ## 📥 다운로드
 
 ### 최신 버전 다운로드
-[**🔽 akeo_slicer.exe 다운로드**]([https://api.github.com/repos/kimyoup/akeo-slicer/releases/latest])
+[**🔽 akeo_slicer.exe 다운로드**](https://api.github.com/repos/kimyoup/akeo-slicer/releases/latest)
 
 ### 설치 방법
 1. 위 링크에서 `akeo_slicer.exe` 다운로드
