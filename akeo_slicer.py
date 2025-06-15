@@ -31,7 +31,7 @@ MAX_WIDTH = 10000
 MAX_HEIGHT = 50000
 
 # 업데이트 관련 상수
-CURRENT_VERSION = "1.0.2"
+CURRENT_VERSION = "1.0.3"
 # 구글 드라이브 설정 (새 버전 업로드 시 파일 ID 업데이트 필요)
 # 주의: 새 파일 업로드 시 기존 파일을 "새 버전 업로드"로 교체하여 ID 유지
 UPDATE_CHECK_URL = "https://drive.google.com/uc?id=1tbWZ-dhuTGNfX36AVwb1Ud_hWSSLnq0G&export=download"
@@ -3953,18 +3953,14 @@ class App(tk.Frame):
         self.merge_guide_text = """
         📌 이미지 합치기 사용법
         
-          1. 📂 찾기 버튼을 클릭하여 이미지들이 있는 폴더를 선택하세요
-          2. 📄 파일 목록 버튼을 클릭하여 파일들을 확인하고 순서를 조정하세요
-          3. 👁️ 미리보기 버튼으로 합쳐질 결과를 미리 확인하세요
-          4. 🎯 자동생성 버튼으로 파일명을 생성하거나 직접 입력하세요
-          5. 🔄 합치기 버튼을 클릭하여 이미지들을 합치세요
+          1. 📂 찾기 버튼으로 이미지 폴더 선택
+          2. 📄 파일 목록에서 파일 확인 및 순서 조정
+          3. 👁️ 미리보기에서 결과 확인 (순서 변경, 파일 제외 가능)
+          4. 🎯 파일명 입력 또는 자동생성
+          5. 🔄 합치기 실행
         
-          💡 팁: 
-          - 여러 이미지를 세로로 합칩니다
-          - 이미지는 자동으로 중앙 정렬됩니다
-          - 순서는 파일명 순으로 정렬되지만 파일 목록에서 변경 가능합니다
-          - 미리보기에서 순서 변경 및 파일 제외도 가능합니다
-          - 지원 파일 형식: JPG, PNG, WebP, PSD, PSB 등
+          💡 팁: 여러 이미지를 세로로 합치며 자동 중앙 정렬
+          📁 지원 형식: JPG, PNG, WebP, PSD, PSB
         """
         
         self.merge_guide_label = tk.Label(self.merge_guide_frame, text=self.merge_guide_text, 
