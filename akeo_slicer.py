@@ -10,6 +10,7 @@ from PIL import Image, ImageTk, ImageDraw
 from dataclasses import dataclass
 from datetime import datetime
 import json
+import requests  # 업데이트 기능을 위한 HTTP 요청
 
 # 드래그 앤 드롭 기능 제거 (복잡하고 불필요)
 
@@ -21,7 +22,7 @@ except ImportError:
 # ===== 상수 정의 =====
 SUPPORTED = ('.png', '.jpg', '.jpeg', '.webp', '.psd', '.psb')
 BASE_OUT = 'slices'
-LOGO = 'crocodile.png'
+LOGO = 'icon.png'
 BASE_DIR = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
 CONFIG_FILE = BASE_DIR / 'webtoon_slicer_config.json'
 
@@ -31,7 +32,7 @@ MAX_WIDTH = 10000
 MAX_HEIGHT = 50000
 
 # 업데이트 관련 상수
-CURRENT_VERSION = "1.0.3"
+CURRENT_VERSION = "1.0.3"  # 테스트용 - 업데이트 확인 후 1.0.3으로 되돌리세요
 # 구글 드라이브 설정 (새 버전 업로드 시 파일 ID 업데이트 필요)
 # 주의: 새 파일 업로드 시 기존 파일을 "새 버전 업로드"로 교체하여 ID 유지
 UPDATE_CHECK_URL = "https://drive.google.com/uc?id=1tbWZ-dhuTGNfX36AVwb1Ud_hWSSLnq0G&export=download"
@@ -803,12 +804,7 @@ class ProgressDialog(tk.Toplevel):
         self.configure(bg=COLORS['bg_main'])
         
         # 아이콘 설정
-        try:
-            icon_path = BASE_DIR / 'icon.ico'
-            if icon_path.exists():
-                self.iconbitmap(str(icon_path))
-        except:
-            pass
+        set_window_icon(self)
         
         # 모달 설정
         self.transient(parent)
@@ -881,12 +877,7 @@ class MergePreviewDialog(tk.Toplevel):
         self.minsize(900, 850)  # 최소 크기도 증가
         
         # 아이콘 설정
-        try:
-            icon_path = BASE_DIR / 'icon.ico'
-            if icon_path.exists():
-                self.iconbitmap(str(icon_path))
-        except:
-            pass
+        set_window_icon(self)
         
         # 모달 설정
         self.transient(parent)
@@ -1486,12 +1477,7 @@ class FileListViewer:
         self.window.configure(bg=COLORS['bg_main'])
         
         # 아이콘 설정
-        try:
-            icon_path = BASE_DIR / 'icon.ico'
-            if icon_path.exists():
-                self.window.iconbitmap(str(icon_path))
-        except:
-            pass
+        set_window_icon(self.window)
         
         # 메인 프레임
         main_frame = tk.Frame(self.window, bg=COLORS['bg_main'])
@@ -2217,12 +2203,7 @@ class PreviewWindow:
         self.window.configure(bg=COLORS['bg_main'])
         
         # 아이콘 설정
-        try:
-            icon_path = BASE_DIR / 'icon.ico'
-            if icon_path.exists():
-                self.window.iconbitmap(str(icon_path))
-        except:
-            pass
+        set_window_icon(self.window)
         
         # 창이 닫힐 때 이벤트 처리
         self.window.protocol("WM_DELETE_WINDOW", lambda: self.window.destroy())
@@ -2457,6 +2438,9 @@ class PreviewWindow:
         dialog.title("자동 분할")
         dialog.geometry("300x200")
         dialog.configure(bg=COLORS['bg_main'])
+        
+        # 아이콘 설정
+        set_window_icon(dialog)
         dialog.transient(self.window)
         dialog.grab_set()
         
@@ -3483,25 +3467,42 @@ class FileRow(tk.Frame):
 class App(tk.Frame):
     """메인 애플리케이션"""
     def __init__(self, master=None):
-        super().__init__(master, bg=COLORS['bg_main'])
-        self.pack(fill='both', expand=True)
-        master.columnconfigure(0, weight=1)
-        master.rowconfigure(0, weight=1)
-        
-        master.configure(bg=COLORS['bg_main'])
+        print("🏗️ App 클래스 초기화 시작")
+        try:
+            super().__init__(master, bg=COLORS['bg_main'])
+            print("✅ 상위 클래스 초기화 완료")
+            self.pack(fill='both', expand=True)
+            master.columnconfigure(0, weight=1)
+            master.rowconfigure(0, weight=1)
+            
+            master.configure(bg=COLORS['bg_main'])
+            print("✅ 기본 레이아웃 설정 완료")
+        except Exception as e:
+            print(f"❌ 기본 초기화 실패: {e}")
+            raise
 
         # 설정 로드
-        self.config = ConfigManager.load()
+        try:
+            self.config = ConfigManager.load()
+            print("✅ 설정 로드 완료")
+        except Exception as e:
+            print(f"❌ 설정 로드 실패: {e}")
+            raise
 
         # 변수 초기화
-        self.in_dir = tk.StringVar()
-        self.out_dir = tk.StringVar(value=str(unique_dir(BASE_OUT)))
-        self.quality = tk.StringVar(value=self.config.get('quality', '무손실'))
-        self.merge_dir = tk.StringVar()
-        self.save_as_png = tk.BooleanVar(value=self.config.get('save_as_png', False))
-        self.merge_filename = tk.StringVar(value="merged_images")
-        self.split_filename = tk.StringVar(value="")  # 분할용 파일명
-        self.number_digits = tk.StringVar(value="3")  # 번호 자릿수
+        try:
+            self.in_dir = tk.StringVar()
+            self.out_dir = tk.StringVar(value=str(unique_dir(BASE_OUT)))
+            self.quality = tk.StringVar(value=self.config.get('quality', '무손실'))
+            self.merge_dir = tk.StringVar()
+            self.save_as_png = tk.BooleanVar(value=self.config.get('save_as_png', False))
+            self.merge_filename = tk.StringVar(value="merged_images")
+            self.split_filename = tk.StringVar(value="")  # 분할용 파일명
+            self.number_digits = tk.StringVar(value="3")  # 번호 자릿수
+            print("✅ 기본 변수 초기화 완료")
+        except Exception as e:
+            print(f"❌ 변수 초기화 실패: {e}")
+            raise
         
         # 크기 조정 관련 변수
         self.resize_dir = tk.StringVar()
@@ -3568,8 +3569,6 @@ class App(tk.Frame):
         notebook.add(resize_tab, text="크기 조정")
         self._build_resize_tab(resize_tab)
 
-
-
         # 푸터
         footer_text = (
             "제작: 악어스튜디오 경영기획부 | 문의: hyo@akeostudio.com | "
@@ -3577,6 +3576,9 @@ class App(tk.Frame):
         )
         tk.Label(main_container, text=footer_text, font=('맑은 고딕', 9), 
                fg=COLORS['text_light'], bg=COLORS['bg_main']).pack(fill='x', pady=(10, 0))
+
+
+
 
     def _build_split_tab(self, parent):
         """분할 탭 구성"""
@@ -4153,17 +4155,10 @@ class App(tk.Frame):
 
 
     def _logo(self):
-        """로고 표시"""
-        p = BASE_DIR / LOGO
-        if p.exists():
-            try:
-                img = Image.open(p)
-                img.thumbnail((120, 120))
-                self.logo = ImageTk.PhotoImage(img)
-                logo_label = tk.Label(self, image=self.logo, bg=COLORS['bg_main'])
-                logo_label.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-40)
-            except Exception:
-                pass
+        """로고 표시 함수 (비활성화됨)"""
+        pass
+        
+
 
     def ensure_out(self) -> Path:
         """출력 폴더 확인 및 생성"""
@@ -4949,90 +4944,198 @@ def _dpi():
 
 def main():
     """메인 함수"""
-    _dpi()
+    print("🚀 악어슬라이서 시작")
+    
+    try:
+        _dpi()
+        print("✅ DPI 설정 완료")
+    except Exception as e:
+        print(f"❌ DPI 설정 실패: {e}")
     
     # 기본 Tk 창 생성
-    root = tk.Tk()
-    
-    root.title('악어슬라이서')
-    
-    # 창 크기 및 위치 설정
-    window_width = 1400
-    window_height = 950
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    x = (screen_width - window_width) // 2
-    y = (screen_height - window_height) // 2
-    root.geometry(f"{window_width}x{window_height}+{x}+{y}")
-    root.minsize(1400, 850)  # 최소 창 크기 설정
-    
-    # 아이콘 설정
     try:
-        icon_path = BASE_DIR / 'icon.ico'
-        if icon_path.exists():
-            root.iconbitmap(str(icon_path))
-    except:
-        pass
+        root = tk.Tk()
+        print("✅ Tk 창 생성 완료")
+    except Exception as e:
+        print(f"❌ Tk 창 생성 실패: {e}")
+        return
+    
+    try:
+        root.title('악어슬라이서')
+        print("✅ 창 제목 설정 완료")
+        
+        # 창 크기 및 위치 설정
+        window_width = 1400
+        window_height = 950
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        root.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        root.minsize(1400, 850)  # 최소 창 크기 설정
+        print("✅ 창 크기 및 위치 설정 완료")
+    except Exception as e:
+        print(f"❌ 창 설정 실패: {e}")
+        return
+    
+    # 아이콘 설정 (안전한 방법)
+    try:
+        set_window_icon(root)
+        print("✅ 메인 창 아이콘 설정 완료")
+    except Exception as e:
+        print(f"⚠️ 메인 창 아이콘 설정 실패: {e}")
     
     # 스타일 설정
-    style = ttk.Style()
-    style.theme_use('clam')
-    
-    # 스크롤바 스타일 커스터마이징
-    style.element_create('Custom.Scrollbar.trough', 'from', 'default')
-    style.element_create('Custom.Scrollbar.thumb', 'from', 'default')
-    
-    # 수직 스크롤바 레이아웃
-    style.layout('Vertical.TScrollbar', 
-                [('Custom.Scrollbar.trough', {'sticky': 'ns', 'children':
-                    [('Custom.Scrollbar.thumb', {'sticky': 'nsew'})]})])
-                    
-    # 수평 스크롤바 레이아웃
-    style.layout('Horizontal.TScrollbar', 
-                [('Custom.Scrollbar.trough', {'sticky': 'ew', 'children':
-                    [('Custom.Scrollbar.thumb', {'sticky': 'nsew'})]})])
-    
-    # 스크롤바 스타일 설정
-    style.configure('Vertical.TScrollbar',
-                   background='#CCCCCC',  # thumb 색상
-                   troughcolor='#F0F0F0', # trough 색상
-                   borderwidth=0,
-                   relief='flat',
-                   width=26)
-                   
-    style.configure('Horizontal.TScrollbar',
-                   background='#CCCCCC',  # thumb 색상
-                   troughcolor='#F0F0F0', # trough 색상
-                   borderwidth=0,
-                   relief='flat',
-                   width=26)
-                   
-    # 마우스 오버/클릭 효과
-    style.map('Vertical.TScrollbar',
-             background=[('active', '#AAAAAA'),
-                        ('pressed', '#999999')])
+    try:
+        style = ttk.Style()
+        style.theme_use('clam')
+        
+        # 스크롤바 스타일 커스터마이징
+        style.element_create('Custom.Scrollbar.trough', 'from', 'default')
+        style.element_create('Custom.Scrollbar.thumb', 'from', 'default')
+        
+        # 수직 스크롤바 레이아웃
+        style.layout('Vertical.TScrollbar', 
+                    [('Custom.Scrollbar.trough', {'sticky': 'ns', 'children':
+                        [('Custom.Scrollbar.thumb', {'sticky': 'nsew'})]})])
                         
-    style.map('Horizontal.TScrollbar',
-             background=[('active', '#AAAAAA'),
-                        ('pressed', '#999999')])
+        # 수평 스크롤바 레이아웃
+        style.layout('Horizontal.TScrollbar', 
+                    [('Custom.Scrollbar.trough', {'sticky': 'ew', 'children':
+                        [('Custom.Scrollbar.thumb', {'sticky': 'nsew'})]})])
+        
+        # 스크롤바 스타일 설정
+        style.configure('Vertical.TScrollbar',
+                       background='#CCCCCC',  # thumb 색상
+                       troughcolor='#F0F0F0', # trough 색상
+                       borderwidth=0,
+                       relief='flat',
+                       width=26)
+                       
+        style.configure('Horizontal.TScrollbar',
+                       background='#CCCCCC',  # thumb 색상
+                       troughcolor='#F0F0F0', # trough 색상
+                       borderwidth=0,
+                       relief='flat',
+                       width=26)
+                       
+        # 마우스 오버/클릭 효과
+        style.map('Vertical.TScrollbar',
+                 background=[('active', '#AAAAAA'),
+                            ('pressed', '#999999')])
+                            
+        style.map('Horizontal.TScrollbar',
+                 background=[('active', '#AAAAAA'),
+                            ('pressed', '#999999')])
+        print("✅ 스타일 설정 완료")
+    except Exception as e:
+        print(f"⚠️ 스타일 설정 실패: {e}")
+
+    try:
+        app = App(root)
+        print("✅ 앱 인스턴스 생성 완료")
+        
+        # 메뉴바 추가
+        menubar = tk.Menu(root)
+        root.config(menu=menubar)
+        
+        # 도움말 메뉴
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="도움말", menu=help_menu)
+        help_menu.add_command(label="업데이트 확인", command=lambda: AutoUpdater(root).check_updates(show_no_update=True))
+        help_menu.add_separator()
+        help_menu.add_command(label="정보", command=lambda: messagebox.showinfo("정보", f"악어슬라이서 v{CURRENT_VERSION}\n\n이미지 분할/합치기/크기조정 도구"))
+        print("✅ 메뉴바 설정 완료")
+        
+        # 시작 시 자동 업데이트 확인 (3초 후)
+        root.after(3000, lambda: check_for_updates_on_startup(root))
+        print("✅ 자동 업데이트 스케줄링 완료")
+        
+        print("🎉 모든 초기화 완료, 메인루프 시작")
+        root.mainloop()
+        
+    except Exception as e:
+        print(f"❌ 앱 초기화 실패: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+
+# 전역 아이콘 설정 함수
+def set_window_icon(window):
+    """창에 아이콘을 설정하는 공통 함수"""
+    try:
+        # 실행 파일인지 확인
+        if getattr(sys, 'frozen', False):
+            # PyInstaller로 빌드된 실행 파일
+            try:
+                application_path = sys._MEIPASS
+            except AttributeError:
+                application_path = os.path.dirname(sys.executable)
+                
+            icon_paths = [
+                os.path.join(application_path, 'icon.ico'),
+                os.path.join(os.path.dirname(sys.executable), 'icon.ico'),
+                'icon.ico'
+            ]
+        else:
+            # 개발 환경
+            try:
+                application_path = os.path.dirname(os.path.abspath(__file__))
+                icon_paths = [
+                    os.path.join(application_path, 'icon.ico'),
+                    str(BASE_DIR / 'icon.ico')
+                ]
+            except:
+                icon_paths = ['icon.ico']
+        
+        # ICO 파일로 아이콘 설정 시도
+        for icon_path in icon_paths:
+            try:
+                if os.path.exists(icon_path):
+                    window.iconbitmap(icon_path)
+                    return True
+            except Exception:
+                continue
+        
+        # PNG 파일로 시도 (더 안전하게)
+        try:
+            png_paths = []
+            if getattr(sys, 'frozen', False):
+                try:
+                    application_path = sys._MEIPASS
+                except AttributeError:
+                    application_path = os.path.dirname(sys.executable)
+                    
+                png_paths = [
+                    os.path.join(application_path, 'icon.png'),
+                    os.path.join(os.path.dirname(sys.executable), 'icon.png'),
+                    'icon.png'
+                ]
+            else:
+                try:
+                    application_path = os.path.dirname(os.path.abspath(__file__))
+                    png_paths = [
+                        os.path.join(application_path, 'icon.png'),
+                        str(BASE_DIR / 'icon.png')
+                    ]
+                except:
+                    png_paths = ['icon.png']
+                
+            for png_path in png_paths:
+                try:
+                    if os.path.exists(png_path):
+                        icon_img = tk.PhotoImage(file=png_path)
+                        window.iconphoto(True, icon_img)
+                        return True
+                except Exception:
+                    continue
+        except Exception:
+            pass
+                
+    except Exception:
+        pass
     
-    app = App(root)
-    
-    # 메뉴바 추가
-    menubar = tk.Menu(root)
-    root.config(menu=menubar)
-    
-    # 도움말 메뉴
-    help_menu = tk.Menu(menubar, tearoff=0)
-    menubar.add_cascade(label="도움말", menu=help_menu)
-    help_menu.add_command(label="업데이트 확인", command=lambda: AutoUpdater(root).check_updates(show_no_update=True))
-    help_menu.add_separator()
-    help_menu.add_command(label="정보", command=lambda: messagebox.showinfo("정보", f"악어슬라이서 v{CURRENT_VERSION}\n\n이미지 분할/합치기/크기조정 도구"))
-    
-    # 시작 시 자동 업데이트 확인 (3초 후)
-    root.after(3000, lambda: check_for_updates_on_startup(root))
-    
-    root.mainloop()
+    return False
 
 # 마우스 휠 이벤트 처리를 위한 함수 추가
 def on_mousewheel(event, widget):
@@ -5059,26 +5162,127 @@ class AutoUpdater:
     def check_updates(self, show_no_update=False):
         """업데이트 확인"""
         try:
+            print(f"업데이트 체크 시작 - 현재 버전: {self.current_version}")
+            
             # GitHub 우선 확인
             github_version, github_url = self._check_github()
             if github_version and self._is_newer_version(github_version):
+                print(f"GitHub에서 새 버전 발견: {github_version}")
                 self._show_update_dialog(github_version, github_url, "GitHub")
                 return True
+            elif github_version:
+                print(f"GitHub 버전 {github_version}은 현재 버전과 같거나 이전 버전")
                 
             # 구글 드라이브 확인 (백업)
             drive_version = self._check_drive()
             if drive_version and self._is_newer_version(drive_version):
+                print(f"구글 드라이브에서 새 버전 발견: {drive_version}")
                 self._show_update_dialog(drive_version, DOWNLOAD_URL, "Google Drive")
                 return True
+            elif drive_version:
+                print(f"구글 드라이브 버전 {drive_version}은 현재 버전과 같거나 이전 버전")
                 
+            print("업데이트 없음 - 최신 버전 사용 중")
             if show_no_update:
                 messagebox.showinfo("업데이트", "최신 버전을 사용 중입니다.")
                 
         except Exception as e:
+            print(f"업데이트 체크 중 예외 발생: {e}")
             if show_no_update:
                 messagebox.showerror("업데이트 확인 실패", f"네트워크 연결을 확인해주세요.\n{str(e)}")
         
         return False
+    
+    def debug_update_check(self):
+        """디버그용 업데이트 체크 (콘솔 출력 포함)"""
+        import tkinter.scrolledtext as scrolledtext
+        
+        # 디버그 창 생성
+        debug_window = tk.Toplevel(self.parent)
+        debug_window.title("업데이트 디버그")
+        debug_window.geometry("600x400")
+        debug_window.configure(bg='white')
+        
+        # 아이콘 설정
+        set_window_icon(debug_window)
+        
+        # 텍스트 영역
+        text_area = scrolledtext.ScrolledText(debug_window, wrap=tk.WORD, 
+                                            font=('맑은 고딕', 10))
+        text_area.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        def log(message):
+            text_area.insert(tk.END, f"{message}\n")
+            text_area.see(tk.END)
+            debug_window.update()
+        
+        log(f"=== 업데이트 디버그 시작 ===")
+        log(f"현재 버전: {self.current_version}")
+        log(f"GitHub API URL: {GITHUB_API_URL}")
+        log(f"구글 드라이브 URL: {UPDATE_CHECK_URL}")
+        log("")
+        
+        # GitHub 체크
+        log("1. GitHub 체크 중...")
+        try:
+            response = requests.get(GITHUB_API_URL, timeout=10)
+            log(f"   응답 코드: {response.status_code}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                log(f"   태그: {data.get('tag_name', 'N/A')}")
+                log(f"   Assets 개수: {len(data.get('assets', []))}")
+                
+                for i, asset in enumerate(data.get('assets', [])):
+                    log(f"   Asset {i+1}: {asset.get('name', 'N/A')}")
+                    
+                version = data['tag_name'].lstrip('v')
+                log(f"   파싱된 버전: {version}")
+                
+                # exe 파일 찾기
+                exe_found = False
+                for asset in data.get('assets', []):
+                    if asset['name'].endswith('.exe'):
+                        log(f"   EXE 파일 발견: {asset['name']}")
+                        log(f"   다운로드 URL: {asset['browser_download_url']}")
+                        exe_found = True
+                        break
+                
+                if not exe_found:
+                    log("   ❌ EXE 파일을 찾을 수 없음")
+                    
+                # 버전 비교
+                is_newer = self._is_newer_version(version)
+                log(f"   새 버전 여부: {is_newer}")
+                
+            else:
+                log(f"   ❌ API 호출 실패: {response.status_code}")
+                
+        except Exception as e:
+            log(f"   ❌ GitHub 체크 오류: {e}")
+        
+        log("")
+        
+        # 구글 드라이브 체크
+        log("2. 구글 드라이브 체크 중...")
+        try:
+            response = requests.get(UPDATE_CHECK_URL, timeout=10)
+            log(f"   응답 코드: {response.status_code}")
+            
+            if response.status_code == 200:
+                version = response.text.strip()
+                log(f"   버전 텍스트: '{version}'")
+                
+                is_newer = self._is_newer_version(version)
+                log(f"   새 버전 여부: {is_newer}")
+            else:
+                log(f"   ❌ API 호출 실패: {response.status_code}")
+                
+        except Exception as e:
+            log(f"   ❌ 구글 드라이브 체크 오류: {e}")
+        
+        log("")
+        log("=== 디버그 완료 ===")
     
     def _check_github(self):
         """GitHub 릴리스 확인"""
@@ -5087,10 +5291,26 @@ class AutoUpdater:
             if response.status_code == 200:
                 data = response.json()
                 version = data['tag_name'].lstrip('v')
-                download_url = data['assets'][0]['browser_download_url'] if data['assets'] else None
-                return version, download_url
-        except:
-            pass
+                
+                # Assets에서 .exe 파일 찾기
+                download_url = None
+                if data.get('assets'):
+                    for asset in data['assets']:
+                        if asset['name'].endswith('.exe'):
+                            download_url = asset['browser_download_url']
+                            break
+                
+                if download_url:
+                    print(f"GitHub 업데이트 체크: 버전 {version} 발견, URL: {download_url}")
+                    return version, download_url
+                else:
+                    print(f"GitHub 업데이트 체크: 버전 {version} 발견하지만 exe 파일 없음")
+            else:
+                print(f"GitHub API 응답 오류: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"GitHub 업데이트 체크 네트워크 오류: {e}")
+        except Exception as e:
+            print(f"GitHub 업데이트 체크 오류: {e}")
         return None, None
     
     def _check_drive(self):
@@ -5098,14 +5318,19 @@ class AutoUpdater:
         try:
             response = requests.get(UPDATE_CHECK_URL, timeout=10)
             if response.status_code == 200:
-                return response.text.strip()
-        except:
-            pass
+                version = response.text.strip()
+                print(f"구글 드라이브 업데이트 체크: 버전 {version} 발견")
+                return version
+            else:
+                print(f"구글 드라이브 API 응답 오류: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            print(f"구글 드라이브 업데이트 체크 네트워크 오류: {e}")
+        except Exception as e:
+            print(f"구글 드라이브 업데이트 체크 오류: {e}")
         return None
     
     def _download_from_drive(self, file_id, destination):
         """구글 드라이브에서 파일 다운로드 (큰 파일 지원)"""
-        import requests
         
         def get_confirm_token(response):
             for key, value in response.cookies.items():
@@ -5162,6 +5387,9 @@ class AutoUpdater:
         dialog.resizable(False, False)
         dialog.configure(bg='white')
         
+        # 아이콘 설정
+        set_window_icon(dialog)
+        
         # 모달 설정
         dialog.transient(self.parent)
         dialog.grab_set()
@@ -5181,8 +5409,8 @@ class AutoUpdater:
         btn_frame = tk.Frame(dialog, bg='white')
         btn_frame.pack(pady=10)
         
-        # 자동 업데이트 버튼
-        auto_btn = tk.Button(btn_frame, text="🚀 자동 업데이트", 
+        # 자동 다운로드 버튼
+        auto_btn = tk.Button(btn_frame, text="📥 자동 다운로드", 
                            command=lambda: self._auto_update(dialog, download_url, new_version),
                            font=('맑은 고딕', 10), bg='#4CAF50', fg='white',
                            relief='flat', padx=20, pady=8)
@@ -5203,7 +5431,7 @@ class AutoUpdater:
         later_btn.pack(side='left', padx=5)
     
     def _auto_update(self, dialog, download_url, new_version):
-        """자동 업데이트 실행"""
+        """자동 업데이트 실행 (간소화된 버전)"""
         dialog.destroy()
         
         # 진행률 다이얼로그
@@ -5212,6 +5440,10 @@ class AutoUpdater:
         progress_dialog.geometry("400x150")
         progress_dialog.resizable(False, False)
         progress_dialog.configure(bg='white')
+        
+        # 아이콘 설정
+        set_window_icon(progress_dialog)
+        
         progress_dialog.transient(self.parent)
         progress_dialog.grab_set()
         
@@ -5226,20 +5458,43 @@ class AutoUpdater:
         status_label.pack(pady=20)
         
         progress_var = tk.DoubleVar()
+        
+        # 파란색 스타일 설정
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Blue.Horizontal.TProgressbar", 
+                       background='#2196F3',
+                       troughcolor='#E3F2FD',
+                       borderwidth=1,
+                       lightcolor='#2196F3',
+                       darkcolor='#1976D2')
+        
         progress_bar = ttk.Progressbar(progress_dialog, variable=progress_var,
-                                     length=350, mode='determinate')
+                                     length=350, mode='determinate',
+                                     style="Blue.Horizontal.TProgressbar")
         progress_bar.pack(pady=10)
         
-        def download_and_install():
+        def download_update():
             try:
                 import urllib.request
                 import tempfile
-                import subprocess
                 import os
+                import shutil
                 
-                # 임시 파일 경로
-                temp_dir = tempfile.gettempdir()
-                temp_file = os.path.join(temp_dir, f"akeo_slicer_v{new_version}.exe")
+                # 현재 실행 파일 경로
+                if getattr(sys, 'frozen', False):
+                    current_exe = sys.executable
+                    current_dir = os.path.dirname(current_exe)
+                    current_name = os.path.basename(current_exe)
+                else:
+                    # 개발 환경에서는 스크립트 파일 경로 사용
+                    current_exe = os.path.abspath(__file__)
+                    current_dir = os.path.dirname(current_exe)
+                    current_name = "akeo_slicer.py"
+                
+                # 새 파일 경로 (현재 디렉토리에 새 이름으로 저장)
+                new_filename = f"akeo_slicer_v{new_version}.exe"
+                new_file_path = os.path.join(current_dir, new_filename)
                 
                 def progress_hook(block_num, block_size, total_size):
                     if total_size > 0:
@@ -5247,63 +5502,38 @@ class AutoUpdater:
                         progress_var.set(percent)
                         progress_dialog.update()
                 
-                # 다운로드 (구글 드라이브 vs GitHub 구분)
+                # 다운로드
                 status_label.config(text="업데이트를 다운로드 중...")
                 
                 if "drive.google.com" in download_url:
                     # 구글 드라이브 다운로드
                     file_id = download_url.split('id=')[1].split('&')[0]
-                    response = self._download_from_drive(file_id, temp_file)
+                    response = self._download_from_drive(file_id, new_file_path)
                     
-                    def save_with_progress():
-                        CHUNK_SIZE = 32768
-                        total_size = int(response.headers.get('content-length', 0))
-                        downloaded = 0
-                        
-                        with open(temp_file, "wb") as f:
-                            for chunk in response.iter_content(CHUNK_SIZE):
-                                if chunk:
-                                    f.write(chunk)
-                                    downloaded += len(chunk)
-                                    if total_size > 0:
-                                        percent = min(100, (downloaded * 100) / total_size)
-                                        progress_var.set(percent)
-                                        progress_dialog.update()
+                    CHUNK_SIZE = 32768
+                    total_size = int(response.headers.get('content-length', 0))
+                    downloaded = 0
                     
-                    save_with_progress()
+                    with open(new_file_path, "wb") as f:
+                        for chunk in response.iter_content(CHUNK_SIZE):
+                            if chunk:
+                                f.write(chunk)
+                                downloaded += len(chunk)
+                                if total_size > 0:
+                                    percent = min(100, (downloaded * 100) / total_size)
+                                    progress_var.set(percent)
+                                    progress_dialog.update()
                 else:
                     # GitHub 다운로드
-                    urllib.request.urlretrieve(download_url, temp_file, progress_hook)
+                    urllib.request.urlretrieve(download_url, new_file_path, progress_hook)
                 
-                # 설치 스크립트 생성
-                status_label.config(text="설치 준비 중...")
-                progress_var.set(90)
-                progress_dialog.update()
-                
-                current_exe = sys.executable if getattr(sys, 'frozen', False) else __file__
-                batch_script = os.path.join(temp_dir, "update_akeo.bat")
-                
-                with open(batch_script, 'w', encoding='utf-8') as f:
-                    f.write(f'''@echo off
-echo 업데이트 설치 중...
-timeout /t 2 /nobreak >nul
-taskkill /f /im "akeo_slicer.exe" >nul 2>&1
-copy "{temp_file}" "{current_exe}" /y
-if exist "{temp_file}" del "{temp_file}"
-if exist "{batch_script}" del "{batch_script}"
-start "" "{current_exe}"
-''')
-                
-                # 설치 실행
-                status_label.config(text="설치 중... 프로그램이 재시작됩니다.")
+                # 다운로드 완료
+                status_label.config(text="다운로드 완료!")
                 progress_var.set(100)
                 progress_dialog.update()
                 
-                # 배치 파일 실행 후 현재 프로그램 종료
-                subprocess.Popen([batch_script], shell=True)
-                
-                # 현재 프로그램 종료
-                progress_dialog.after(1000, lambda: self.parent.quit())
+                # 잠시 대기
+                progress_dialog.after(1000, lambda: self._show_update_complete_dialog(progress_dialog, new_file_path, new_version))
                 
             except Exception as e:
                 progress_dialog.destroy()
@@ -5313,8 +5543,137 @@ start "" "{current_exe}"
         
         # 별도 스레드에서 다운로드 실행
         import threading
-        thread = threading.Thread(target=download_and_install, daemon=True)
+        thread = threading.Thread(target=download_update, daemon=True)
         thread.start()
+    
+    def _show_update_complete_dialog(self, progress_dialog, new_file_path, new_version):
+        """업데이트 완료 다이얼로그 표시"""
+        progress_dialog.destroy()
+        
+        # 완료 다이얼로그
+        complete_dialog = tk.Toplevel(self.parent)
+        complete_dialog.title("업데이트 완료")
+        complete_dialog.geometry("450x200")
+        complete_dialog.resizable(False, False)
+        complete_dialog.configure(bg='white')
+        
+        # 아이콘 설정
+        set_window_icon(complete_dialog)
+        
+        complete_dialog.transient(self.parent)
+        complete_dialog.grab_set()
+        
+        # 중앙 정렬
+        complete_dialog.update_idletasks()
+        x = (complete_dialog.winfo_screenwidth() // 2) - (450 // 2)
+        y = (complete_dialog.winfo_screenheight() // 2) - (200 // 2)
+        complete_dialog.geometry(f"450x200+{x}+{y}")
+        
+        # 성공 아이콘과 메시지
+        tk.Label(complete_dialog, text="✅", font=('맑은 고딕', 24), 
+                bg='white', fg='#4CAF50').pack(pady=10)
+        
+        message = f"업데이트가 완료되었습니다!\n\n새 버전 {new_version}이 다운로드되었습니다.\n프로그램을 종료한 후 새 파일을 실행해주세요."
+        tk.Label(complete_dialog, text=message, font=('맑은 고딕', 11), 
+                bg='white', justify='center').pack(pady=10)
+        
+        # 파일 경로 표시
+        path_frame = tk.Frame(complete_dialog, bg='white')
+        path_frame.pack(pady=5, padx=20, fill='x')
+        
+        tk.Label(path_frame, text="새 파일:", font=('맑은 고딕', 9), 
+                bg='white', fg='#666').pack(anchor='w')
+        
+        path_text = tk.Text(path_frame, height=2, font=('맑은 고딕', 8), 
+                           bg='#f5f5f5', relief='flat', wrap='word')
+        path_text.pack(fill='x', pady=2)
+        path_text.insert('1.0', new_file_path)
+        path_text.config(state='disabled')
+        
+        # 버튼 프레임
+        btn_frame = tk.Frame(complete_dialog, bg='white')
+        btn_frame.pack(pady=15)
+        
+        # 폴더 열기 버튼
+        folder_btn = tk.Button(btn_frame, text="📁 폴더 열기", 
+                              command=lambda: self._cancel_auto_close_and_action(lambda: self._open_file_location(new_file_path)),
+                              font=('맑은 고딕', 10), bg='#2196F3', fg='white',
+                              relief='flat', padx=15, pady=5)
+        folder_btn.pack(side='left', padx=5)
+        
+        # 프로그램 종료 버튼
+        exit_btn = tk.Button(btn_frame, text="🚪 프로그램 종료", 
+                            command=lambda: self._cancel_auto_close_and_action(lambda: self._exit_for_update(complete_dialog)),
+                            font=('맑은 고딕', 10), bg='#4CAF50', fg='white',
+                            relief='flat', padx=15, pady=5)
+        exit_btn.pack(side='left', padx=5)
+        
+        # 나중에 버튼
+        later_btn = tk.Button(btn_frame, text="나중에", 
+                             command=lambda: self._cancel_auto_close_and_action(lambda: complete_dialog.destroy()),
+                             font=('맑은 고딕', 10), bg='#757575', fg='white',
+                             relief='flat', padx=15, pady=5)
+        later_btn.pack(side='left', padx=5)
+        
+        # 5초 후 자동 종료 타이머 시작
+        self._start_auto_close_timer(complete_dialog)
+    
+    def _open_file_location(self, file_path):
+        """파일 위치 열기"""
+        try:
+            import subprocess
+            import os
+            
+            if os.name == 'nt':  # Windows
+                subprocess.run(['explorer', '/select,', file_path])
+            elif os.name == 'posix':  # macOS/Linux
+                subprocess.run(['open', '-R', file_path])
+        except Exception as e:
+            messagebox.showerror("오류", f"폴더를 열 수 없습니다.\n{str(e)}")
+    
+    def _start_auto_close_timer(self, dialog):
+        """5초 후 자동 종료 타이머 시작"""
+        self.auto_close_seconds = 5
+        self.auto_close_dialog = dialog
+        self.auto_close_cancelled = False
+        self._update_auto_close_timer()
+    
+    def _cancel_auto_close_and_action(self, action):
+        """자동 종료를 취소하고 액션 실행"""
+        self.auto_close_cancelled = True
+        if hasattr(self, 'auto_close_dialog') and self.auto_close_dialog.winfo_exists():
+            self.auto_close_dialog.title("업데이트 완료")
+        action()
+    
+    def _update_auto_close_timer(self):
+        """자동 종료 타이머 업데이트"""
+        # 취소되었으면 타이머 중지
+        if hasattr(self, 'auto_close_cancelled') and self.auto_close_cancelled:
+            return
+            
+        if hasattr(self, 'auto_close_seconds') and self.auto_close_seconds > 0:
+            # 다이얼로그 제목에 카운트다운 표시
+            if hasattr(self, 'auto_close_dialog') and self.auto_close_dialog.winfo_exists():
+                self.auto_close_dialog.title(f"업데이트 완료 - {self.auto_close_seconds}초 후 자동 종료")
+                self.auto_close_seconds -= 1
+                # 1초 후 다시 호출
+                self.auto_close_dialog.after(1000, self._update_auto_close_timer)
+            else:
+                # 다이얼로그가 닫혔으면 타이머 중지
+                if hasattr(self, 'auto_close_seconds'):
+                    delattr(self, 'auto_close_seconds')
+        else:
+            # 시간이 다 되면 자동 종료
+            if hasattr(self, 'auto_close_dialog') and self.auto_close_dialog.winfo_exists():
+                self._exit_for_update(self.auto_close_dialog)
+    
+    def _exit_for_update(self, dialog):
+        """업데이트를 위한 프로그램 종료"""
+        dialog.destroy()
+        if self.parent:
+            self.parent.quit()
+        else:
+            sys.exit(0)
     
     def _manual_download(self, dialog, download_url):
         """수동 다운로드"""
@@ -5344,4 +5703,11 @@ def check_for_updates_on_startup(parent):
     thread.start()
 
 if __name__ == '__main__':
-    main()
+    print("🔥 프로그램 시작점 도달")
+    try:
+        main()
+    except Exception as e:
+        print(f"💥 메인 함수 실행 중 오류: {e}")
+        import traceback
+        traceback.print_exc()
+        input("Press Enter to exit...")  # 콘솔 창이 바로 닫히지 않도록
