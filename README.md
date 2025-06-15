@@ -45,7 +45,7 @@
 ## 📥 다운로드
 
 ### 최신 버전 다운로드
-[**🔽 akeo_slicer.exe 다운로드**](https://github.com/YOUR_USERNAME/akeo-slicer/releases/latest)
+[**🔽 akeo_slicer.exe 다운로드**]([https://api.github.com/repos/kimyoup/akeo-slicer/releases/latest])
 
 ### 설치 방법
 1. 위 링크에서 `akeo_slicer.exe` 다운로드
@@ -130,7 +130,7 @@ MIT License - 자유롭게 사용, 수정, 배포 가능
 ## 📞 문의
 
 - **개발자**: AkeoStudio
-- **이슈 리포트**: [GitHub Issues](https://github.com/YOUR_USERNAME/akeo-slicer/issues)
+- **이슈 리포트**: [GitHub Issues](https://github.com/kimyoup/akeo-slicer/issues)
 
 ---
 
