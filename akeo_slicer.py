@@ -230,6 +230,14 @@ def open_folder(path: Path):
     except Exception as e:
         messagebox.showerror("오류", f"폴더를 열 수 없습니다: {e}")
 
+def open_homepage():
+    """악어스튜디오 홈페이지 열기"""
+    try:
+        import webbrowser
+        webbrowser.open("https://akeostudio.com")
+    except Exception as e:
+        messagebox.showerror("오류", f"홈페이지를 열 수 없습니다.\n{str(e)}\n\n직접 방문: https://akeostudio.com")
+
 def format_file_size(size_bytes):
     """파일 크기 포맷팅"""
     for unit in ['B', 'KB', 'MB', 'GB']:
@@ -3571,8 +3579,8 @@ class App(tk.Frame):
 
         # 푸터
         footer_text = (
-            "제작: 악어스튜디오 경영기획부 | 문의: hyo@akeostudio.com | "
-            "© 2025 Akeo Studio • Free Distribution • akeostudio.com"
+            "제작: 악어스튜디오 경영기획부 | "
+            "© 2025 AkeoStudio • Free Distribution • akeostudio.com"
         )
         tk.Label(main_container, text=footer_text, font=('맑은 고딕', 9), 
                fg=COLORS['text_light'], bg=COLORS['bg_main']).pack(fill='x', pady=(10, 0))
@@ -5044,7 +5052,9 @@ def main():
         menubar.add_cascade(label="도움말", menu=help_menu)
         help_menu.add_command(label="업데이트 확인", command=lambda: AutoUpdater(root).check_updates(show_no_update=True))
         help_menu.add_separator()
-        help_menu.add_command(label="정보", command=lambda: messagebox.showinfo("정보", f"악어슬라이서 v{CURRENT_VERSION}\n\n이미지 분할/합치기/크기조정 도구"))
+        help_menu.add_command(label="악어스튜디오 홈페이지", command=lambda: open_homepage())
+        help_menu.add_separator()
+        help_menu.add_command(label="정보", command=lambda: messagebox.showinfo("정보", f"악어슬라이서 v{CURRENT_VERSION}\n\n이미지 분할/합치기/크기조정 도구\n\n© 2025 악어스튜디오\nakeostudio.com"))
         print("✅ 메뉴바 설정 완료")
         
         # 시작 시 자동 업데이트 확인 (3초 후)
