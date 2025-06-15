@@ -32,10 +32,11 @@ MAX_HEIGHT = 50000
 
 # 업데이트 관련 상수
 CURRENT_VERSION = "1.0.2"
-# 구글 드라이브 설정 (실제 파일 ID로 교체하세요)
-UPDATE_CHECK_URL = "https://drive.google.com/uc?id=YOUR_VERSION_FILE_ID&export=download"
-DOWNLOAD_URL = "https://drive.google.com/uc?id=YOUR_EXE_FILE_ID&export=download"
-GITHUB_API_URL = "https://api.github.com/repos/YOUR_GITHUB_USERNAME/akeo-slicer/releases/latest"
+# 구글 드라이브 설정 (새 버전 업로드 시 파일 ID 업데이트 필요)
+# 주의: 새 파일 업로드 시 기존 파일을 "새 버전 업로드"로 교체하여 ID 유지
+UPDATE_CHECK_URL = "https://drive.google.com/uc?id=1tbWZ-dhuTGNfX36AVwb1Ud_hWSSLnq0G&export=download"
+DOWNLOAD_URL = "https://drive.google.com/uc?id=1wKopCfij_0fYQqapCHrNFUuwJY-8GN3F&export=download"
+GITHUB_API_URL = "https://api.github.com/repos/kimyoup/akeo-slicer/releases/latest"
 
 # UI 컬러 테마
 COLORS = {
@@ -3571,7 +3572,7 @@ class App(tk.Frame):
 
         # 푸터
         footer_text = (
-            "제작: 악어스튜디오 경영기획부 | 버전 10.0 | 문의: hyo@akeostudio.com | "
+            "제작: 악어스튜디오 경영기획부 | 문의: hyo@akeostudio.com | "
             "© 2025 Akeo Studio • Free Distribution • akeostudio.com"
         )
         tk.Label(main_container, text=footer_text, font=('맑은 고딕', 9), 
@@ -3954,13 +3955,15 @@ class App(tk.Frame):
         
           1. 📂 찾기 버튼을 클릭하여 이미지들이 있는 폴더를 선택하세요
           2. 📄 파일 목록 버튼을 클릭하여 파일들을 확인하고 순서를 조정하세요
-          3. 🎯 자동생성 버튼으로 파일명을 생성하거나 직접 입력하세요
-          4. 🔄 합치기 버튼을 클릭하여 이미지들을 합치세요
+          3. 👁️ 미리보기 버튼으로 합쳐질 결과를 미리 확인하세요
+          4. 🎯 자동생성 버튼으로 파일명을 생성하거나 직접 입력하세요
+          5. 🔄 합치기 버튼을 클릭하여 이미지들을 합치세요
         
           💡 팁: 
           - 여러 이미지를 세로로 합칩니다
           - 이미지는 자동으로 중앙 정렬됩니다
           - 순서는 파일명 순으로 정렬되지만 파일 목록에서 변경 가능합니다
+          - 미리보기에서 순서 변경 및 파일 제외도 가능합니다
           - 지원 파일 형식: JPG, PNG, WebP, PSD, PSB 등
         """
         
@@ -4955,7 +4958,7 @@ def main():
     # 기본 Tk 창 생성
     root = tk.Tk()
     
-    root.title('악어슬라이서 v1.0')
+    root.title('악어슬라이서')
     
     # 창 크기 및 위치 설정
     window_width = 1400
